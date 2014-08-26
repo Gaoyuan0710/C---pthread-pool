@@ -32,6 +32,9 @@ using std::queue;
 using std::vector;
 
 namespace gaoyuan{
+
+
+
 pthread_t MyPthreadPool::manage_pthread;
 pthread_cond_t MyPthreadPool::cond;
 pthread_mutex_t MyPthreadPool::mutex;
@@ -49,6 +52,8 @@ void MyPthreadPool::my_pthread_pool_init(){
 	MyMutex::mutex_init(&mutex);
 	MyMutex::mutex_init(&pthread_queue_mutex);
 	MyCond::cond_init(&cond);
+
+	MyPthread::my_pthread_create(&manage_pthread, my_pthread_manager);
 
 	for (int i = 0; i < this->max_pthread_num; i++){
 		pthread_t pthread_tmp;
@@ -132,6 +137,28 @@ void MyPthreadPool::my_pthread_manager(void *arg){
 			}
 		}
 	}
+}
+void MyPthreadPool::my_pthread_pool_destory(){
+	destory_flag = true;
+
+	MyPthread::my_pthread_join(manage_pthread);
+	cout << "Kill manage pthread " << endl;
+
+	MyCond::cond_broadcast(&cond);
+	for (int i = 0; i < current_pthread_num; i++){
+		pthread_t pthread_tmp;
+
+		pthread_tmp = pthread_work_queue.front();
+		MyPthread::my_pthread_join(pthread_tmp);
+		pthread_work_queue.pop();
+	}
+	cout << "Kill work pthread " << endl;
+
+	MyCond::cond_destroy(&cond);
+	MyMutex::mutex_destory(&mutex);
+
+	cout << "Destory cond and mutex " << endl;
+	cout << "Deal work finished " << endl;
 }
 }
 

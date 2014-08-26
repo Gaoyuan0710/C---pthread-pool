@@ -22,12 +22,15 @@
 #include <queue>
 #include <vector>
 #include <pthread.h>
-#include "myWord.h"
+#include "myWork.h"
 
 using std::queue;
 
 namespace gaoyuan{
 	class MyPthread my_pthread;
+
+int i[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+MyWork test_work[10] = {MyWork(work, (void *)&i[0]),  MyWork(work, (void *)&i[1]), MyWork(work, (void *)&i[2]), MyWork(work, (void *)&i[3]), MyWork(work, (void *)&i[4]), MyWork(work, (void *)&i[5]), MyWork(work, (void *)&i[6]), MyWork(work, (void *)&i[7]), MyWork(work, (void *)&i[8]), MyWork(work, (void *)&i[9]) };
 
 	class MyPthreadPool{
 		public:
