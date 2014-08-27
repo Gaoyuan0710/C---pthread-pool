@@ -22,6 +22,13 @@
 #include "myPthreadPool.h"
 #include "myWork.h"
 
+#include "myCond.cpp"
+#include "myMutex.cpp"
+#include "myPthread.cpp"
+#include "myPthreadPool.cpp"
+#include "myWork.cpp"
+
+
 using namespace gaoyuan;
 
 using std::cout;
@@ -30,8 +37,8 @@ using std::endl;
 
 int main(int argc, char *argv[])
 {
-	int max_pthread_num = 3;
-	int work_num = 2;
+	int max_pthread_num = 1;
+	int work_num = 20;
 
 	MyPthreadPool my_pthread_pool_test(max_pthread_num);
 	my_pthread_pool_test.my_pthread_pool_init();
@@ -40,9 +47,12 @@ int main(int argc, char *argv[])
 		my_pthread_pool_test.my_pthread_pool_add_work(work, &i);
 	}
 
-	while(1);
+	while(1){
+		sleep(150);
+		cout << "BBBBBBBBBBBBB" << endl;
+	}
 
-
+	my_pthread_pool_test.my_pthread_pool_destory();
 	return 0;
 }
 

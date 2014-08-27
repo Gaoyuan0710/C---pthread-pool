@@ -63,7 +63,7 @@ void MyPthreadPool::my_pthread_pool_init(){
 		current_pthread_num++;
 	}
 }
-int MyPthreadPool::my_pthread_pool_routine(void *argv){
+void *MyPthreadPool::my_pthread_pool_routine(void *argv){
 	cout << "Pthread " << MyPthread::my_pthread_self_id() << " is starting " << endl;
 
 	while (true){
@@ -77,6 +77,7 @@ int MyPthreadPool::my_pthread_pool_routine(void *argv){
 				exit_pthread_num--;
 				cout << "Pthread " << MyPthread::my_pthread_self_id() << " is exiting " << endl;
 				MyMutex::mutex_unlock(&mutex);
+				current_pthread_num--;
 				MyPthread::my_pthread_exit(NULL);
 			}
 		}
@@ -90,52 +91,68 @@ int MyPthreadPool::my_pthread_pool_routine(void *argv){
 
 		MyWork *tmp_work = (my_work_queue.front());
 		my_work_queue.pop();
+		current_work_size--;
 		MyMutex::mutex_unlock(&mutex);
-		(tmp_work)((int *)tmp_work->arg);
+		(tmp_work->work)((int *)tmp_work->arg);
 	}
+	cout << "Pthread " << MyPthread::my_pthread_self_id() << "say byby to you " << endl;
+	current_pthread_num--;
 	MyPthread::my_pthread_exit(NULL);
-	return 0;
 }
-int MyPthreadPool::my_pthread_pool_add_work(void *(*work)(void *), void *arg){
+void MyPthreadPool::my_pthread_pool_add_work(void *(*work)(void *arg), void *arg){
 	MyMutex::mutex_lock(&mutex);
-	my_work_queue.push(work);
+	my_work_queue.push(&test_work[*(int *) arg]);
 	current_work_size++;
 	MyCond::cond_signal(&cond);
 	MyMutex::mutex_unlock(&mutex);
 
-	return 0;
 }
-void MyPthreadPool::my_pthread_manager(void *arg){
+void *MyPthreadPool::my_pthread_manager(void *arg){
+//while (true) {	
 	while (destory_flag == false){
-		sleep(50);
+		sleep(20);
 
 		int work_size = current_work_size;
 		int pthread_num = current_pthread_num;
 
+		cout << "manager coming !" << endl;
 
+		cout << "pthread num is " << pthread_num << " work size is " << work_size << endl;
 		if (pthread_num < work_size / 3){
+			cout << "TOO MANY WORKS " << endl;
 			MyMutex::mutex_lock(&mutex);
 
 			cout << "There are too many works and too less pthreads, we should add some pthreads" << endl;
 			
+	//		for (int i = pthread_num; i < 4; i ++) {
 			for (int i = pthread_num; i < work_size / 3; i++){
 				pthread_t pthread_tmp;
-
+ 	
 				MyPthread::my_pthread_create(&pthread_tmp, my_pthread_pool_routine);
 				pthread_work_queue.push(&pthread_tmp);
 				current_pthread_num++;
+
+		//		break;
 			}
+			MyMutex::mutex_unlock(&mutex);
+//			break;
 		}
-		if (pthread_num / 3 > work_size ){
+		else if (pthread_num / 3 > work_size ){
+			cout << "TOO MANY PTHREADS" << endl;
+
 			MyMutex::mutex_lock(&mutex);
 			exit_pthread_num = pthread_num / 3 - work_size;
 			MyMutex::mutex_unlock(&mutex);
 
-			cout << "There are too mant pthreads and too less works, we should kill some pthreads" << endl;
+			cout << "There are too many pthreads and too less works, we should kill some pthreads " << exit_pthread_num << endl;
 			for (int i = 0; i < exit_pthread_num; i++){
 				MyCond::cond_signal(&cond);
 			}
 		}
+		else{
+			cout << "Keep this " << endl;
+		}
+
 	}
 }
 void MyPthreadPool::my_pthread_pool_destory(){
@@ -146,10 +163,10 @@ void MyPthreadPool::my_pthread_pool_destory(){
 
 	MyCond::cond_broadcast(&cond);
 	for (int i = 0; i < current_pthread_num; i++){
-		pthread_t pthread_tmp;
+//	pthread_t *pthread_tmp;
 
-		pthread_tmp = pthread_work_queue.front();
-		MyPthread::my_pthread_join(pthread_tmp);
+		pthread_t *pthread_tmp = pthread_work_queue.front();
+		MyPthread::my_pthread_join(*pthread_tmp);
 		pthread_work_queue.pop();
 	}
 	cout << "Kill work pthread " << endl;

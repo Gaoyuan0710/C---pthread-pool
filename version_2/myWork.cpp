@@ -21,8 +21,8 @@ using std::endl;
 namespace gaoyuan{
 void *work(void *arg) {
 	cout << "Thread id is " << MyPthread::my_pthread_self_id() << " while the id of the task is " << *(int *)arg << endl;
-	sleep(2);
-	cout << "the task whose id is " << *(int *)arg << " is over while the thread is " << MyPthread::my_pthread_self_id();
+	sleep(10);
+	cout << "the task whose id is " << *(int *)arg << " is over while the thread is " << MyPthread::my_pthread_self_id() << endl;
 
 	return NULL;
 }
